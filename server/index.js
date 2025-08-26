@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+
 import bookRoute from "./route/book.route.js";
 import userRoute from "./route/user.route.js";
 import adminRoute from "./route/admin.route.js";
@@ -20,7 +21,7 @@ const __dirname = path.dirname(__filename);
 const port = process.env.PORT || 3000;
 const mongo_uri = process.env.MONGO_URI;
 
-// ✅ MongoDB connect
+// ✅ MongoDB Connect
 mongoose
   .connect(mongo_uri, { serverSelectionTimeoutMS: 5000 })
   .then(() => console.log("✅ Connected to MongoDB"))
@@ -31,14 +32,15 @@ app.use("/book", bookRoute);
 app.use("/user", userRoute);
 app.use("/admin", adminRoute);
 
-// ✅ React build serve
-const clientBuildPath = path.join(__dirname, "client", "dist");
+// ✅ React Build Serve (important fix for Render)
+const clientBuildPath = path.join(__dirname, "../client/dist");
 app.use(express.static(clientBuildPath));
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(clientBuildPath, "index.html"));
 });
 
+// ✅ Server Listen
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
