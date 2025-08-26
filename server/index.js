@@ -14,31 +14,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Get the directory name in ES module scope
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const port = process.env.PORT || 3000;
 const mongo_uri = process.env.MONGO_URI;
 
-// ✅ Connect to MongoDB
+// ✅ MongoDB connect
 mongoose
   .connect(mongo_uri, { serverSelectionTimeoutMS: 5000 })
   .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((error) =>
-    console.log("❌ Error connecting to MongoDB:", error.message)
-  );
+  .catch((error) => console.log("❌ MongoDB Error:", error.message));
 
-// API routes
+// ✅ API Routes
 app.use("/book", bookRoute);
 app.use("/user", userRoute);
 app.use("/admin", adminRoute);
 
-// Serve static files from the React app build directory
-const clientBuildPath = path.join(__dirname, "..", "client", "dist");
+// ✅ React build serve
+const clientBuildPath = path.join(__dirname, "client", "dist");
 app.use(express.static(clientBuildPath));
 
-// Catch-all handler to send the React app for any non-API routes
 app.get("*", (req, res) => {
   res.sendFile(path.join(clientBuildPath, "index.html"));
 });
