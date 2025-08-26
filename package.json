@@ -1,0 +1,27 @@
+{
+  "name": "book-store-app",
+  "version": "1.0.0",
+  "description": "A full-stack book store application with React frontend and Node.js backend",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "cd server && node index.js",
+    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\"",
+    "build": "cd client && npm run build",
+    "render-postbuild": "cd client && npm install && npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "book",
+    "store",
+    "mern",
+    "react",
+    "node",
+    "express",
+    "mongodb"
+  ],
+  "author": "Muhammad Afzal",
+  "license": "MIT",
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
