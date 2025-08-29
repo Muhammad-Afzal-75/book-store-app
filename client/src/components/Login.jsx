@@ -6,8 +6,11 @@ import { useAuth } from '../contest/AuthProvider'
 
 const Login = () => {
   const navigate = useNavigate();
-  const {authUser, setAuthUser} = useAuth();
+  const { authUser, setAuthUser } = useAuth();
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+
+  // ✅ Env se API base URL lo
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const {
     register,
@@ -31,7 +34,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:5050/user/login',
+        `${API_URL}/user/login`,   // ✅ env se URL
         userinfo
       );
 
@@ -59,15 +62,17 @@ const Login = () => {
     <div>
       {/* Toast Notification */}
       {toast.show && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-md shadow-lg ${
-          toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        } text-white transition-transform transform duration-300 ${
-          toast.show ? 'translate-x-0' : 'translate-x-full'
-        }`}>
+        <div
+          className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-md shadow-lg ${
+            toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+          } text-white transition-transform transform duration-300 ${
+            toast.show ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
           {toast.message}
         </div>
       )}
-      
+
       <dialog id="my_modal_3" className="modal">
         <div className="modal-box">
           {/* Close Button */}

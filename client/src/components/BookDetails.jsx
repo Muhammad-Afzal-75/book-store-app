@@ -10,10 +10,12 @@ const BookDetails = () => {
   const [error, setError] = useState('');
   const [showPayment, setShowPayment] = useState(false);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     const fetchBook = async () => {
       try {
-        const response = await axios.get(`http://localhost:5050/book/${id}`);
+        const response = await axios.get(`${API_URL}/book/${id}`);
         setBook(response.data);
         setLoading(false);
       } catch (err) {
@@ -25,7 +27,7 @@ const BookDetails = () => {
     if (id) {
       fetchBook();
     }
-  }, [id]);
+  }, [id, API_URL]);
 
   const handleBuyNow = () => {
     setShowPayment(true);

@@ -16,6 +16,9 @@ const Signup = () => {
   const { setAuthUser } = useAuth();
   const navigate = useNavigate();
 
+  // ✅ env se base URL
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Toast function
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -34,21 +37,18 @@ const Signup = () => {
     
     try {
       const endpoint = isAdminSignup ? '/user/create-admin-key' : '/user/signup';
-      const response = await axios.post(`http://localhost:5050${endpoint}`, userinfo);
+      // ✅ yahan env wali URL use hogi
+      const response = await axios.post(`${API_URL}${endpoint}`, userinfo);
+
       console.log(response.data);
       showToast("Signup successful!", 'success');
       
-      // Store only the user object in localStorage
       localStorage.setItem("user", JSON.stringify(response.data.user));
-      
-      // Update authUser state in AuthProvider
       setAuthUser(response.data.user);
-      
-      // Redirect to home page
       navigate('/');
     } catch (error) {
       console.error("There was an error signing up!", error);
-      showToast("Signup failed. " + error.response?.data?.message || "Please try again.", 'error');
+      showToast("Signup failed. " + (error.response?.data?.message || "Please try again."), 'error');
     }
   }
 
@@ -169,4 +169,4 @@ const Signup = () => {
   )
 }
 
-export default Signup
+export default Signup;
