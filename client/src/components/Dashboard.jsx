@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard = () => {
   const [books, setBooks] = useState([]);
@@ -11,7 +11,7 @@ const Dashboard = () => {
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [activeTab, setActiveTab] = useState("books"); // 'books' or 'users'
 
-  // Form state for books
+  // Book form state
   const [formData, setFormData] = useState({
     name: "",
     title: "",
@@ -20,24 +20,22 @@ const Dashboard = () => {
     Image: "",
     description: "",
   });
-
   const [isEditing, setIsEditing] = useState(false);
   const [currentBookId, setCurrentBookId] = useState(null);
 
-  // Toast function
+  // Toast helper
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast({ show: false, message: "", type: "" });
-    }, 3000);
+    setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
   };
 
-  // Fetch all books
+  // Fetch books
   const fetchBooks = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/book`);
-      setBooks(response.data);
+      const res = await axios.get(`${API_URL}/books`);
+      const data = Array.isArray(res.data) ? res.data : res.data.books ? res.data.books : [];
+      setBooks(data);
       setError("");
     } catch (err) {
       setError("Failed to fetch books");
@@ -47,12 +45,13 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch all users
+  // Fetch users
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/users`);
-      setUsers(response.data);
+      const res = await axios.get(`${API_URL}/admin/users`);
+      const data = Array.isArray(res.data) ? res.data : res.data.users ? res.data.users : [];
+      setUsers(data);
       setError("");
     } catch (err) {
       setError("Failed to fetch users");
@@ -63,57 +62,41 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (activeTab === "books") {
-      fetchBooks();
-    } else if (activeTab === "users") {
-      fetchUsers();
-    }
+    if (activeTab === "books") fetchBooks();
+    else if (activeTab === "users") fetchUsers();
   }, [activeTab]);
 
-  // Handle form input changes for books
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  // Handle form input change
+  const handleInputChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // Handle form submission for books
+  // Submit book form
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!formData.name || !formData.title || !formData.price || !formData.category) {
-      showToast("Please fill in all required fields", "error");
+      showToast("Please fill all required fields", "error");
       return;
     }
 
     try {
       if (isEditing) {
-        const response = await axios.put(`${API_BASE_URL}/book/${currentBookId}`, formData);
-        setBooks(books.map((book) => (book._id === currentBookId ? response.data : book)));
-        showToast("Book updated successfully!", "success");
+        const res = await axios.put(`${API_URL}/books/${currentBookId}`, formData);
+        setBooks(books.map((b) => (b._id === currentBookId ? res.data : b)));
+        showToast("Book updated successfully!");
       } else {
-        const response = await axios.post(`${API_BASE_URL}/book`, formData);
-        setBooks([...books, response.data]);
-        showToast("Book added successfully!", "success");
+        const res = await axios.post(`${API_URL}/books`, formData);
+        setBooks([...books, res.data]);
+        showToast("Book added successfully!");
       }
-
-      setFormData({
-        name: "",
-        title: "",
-        price: "",
-        category: "",
-        Image: "",
-        description: "",
-      });
+      setFormData({ name: "", title: "", price: "", category: "", Image: "", description: "" });
       setIsEditing(false);
       setCurrentBookId(null);
-    } catch (err) {
+    } catch {
       showToast(`Failed to ${isEditing ? "update" : "add"} book`, "error");
     }
   };
 
-  // Handle edit book
+  // Edit book
   const handleEdit = (book) => {
     setFormData({
       name: book.name,
@@ -128,92 +111,58 @@ const Dashboard = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Handle delete book
+  // Delete book
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this book?")) {
-      try {
-        await axios.delete(`${API_BASE_URL}/book/${id}`);
-        setBooks(books.filter((book) => book._id !== id));
-        showToast("Book deleted successfully!", "success");
-      } catch (err) {
-        showToast("Failed to delete book", "error");
-      }
+    if (!window.confirm("Are you sure you want to delete this book?")) return;
+    try {
+      await axios.delete(`${API_URL}/books/${id}`);
+      setBooks(books.filter((b) => b._id !== id));
+      showToast("Book deleted successfully!");
+    } catch {
+      showToast("Failed to delete book", "error");
     }
   };
 
-  // Toggle user admin status
+  // Toggle user admin
   const toggleUserAdmin = async (userId, isAdmin) => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/admin/user/${userId}/admin`, {
-        isAdmin: !isAdmin,
-      });
-
-      setUsers(users.map((user) => (user._id === userId ? response.data.user : user)));
-
-      showToast(response.data.message, "success");
-    } catch (err) {
+      const res = await axios.put(`${API_URL}/admin/user/${userId}/admin`, { isAdmin: !isAdmin });
+      setUsers(users.map((u) => (u._id === userId ? res.data.user : u)));
+      showToast(res.data.message, "success");
+    } catch {
       showToast("Failed to update user admin status", "error");
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Toast Notification */}
+    <div className="container mx-auto px-4 mt-15">
+      {/* Toast */}
       {toast.show && (
         <div
           className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-md shadow-lg ${
             toast.type === "success" ? "bg-green-500" : "bg-red-500"
-          } text-white transition-transform transform duration-300 ${
-            toast.show ? "translate-x-0" : "translate-x-full"
-          }`}
+          } text-white`}
         >
           {toast.message}
         </div>
       )}
 
-      <h1 className="text-3xl font-bold mt-15 text-center">Admin Dashboard</h1>
-
-      {/* Create Admin Form */}
-      <div className="bg-base-100 p-6 rounded-lg shadow-lg mb-8">
-        <h2 className="text-2xl font-bold mb-4">Create Admin User</h2>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const adminData = {
-              fullname: formData.get("fullname"),
-              email: formData.get("email"),
-              password: formData.get("password"),
-            };
-
-            try {
-              const response = await axios.post(`${API_BASE_URL}/user/create-admin`, adminData);
-              showToast(response.data.message, "success");
-              e.target.reset();
-            } catch (err) {
-              showToast("Failed to create admin: " + (err.response?.data?.message || err.message), "error");
-            }
-          }}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input type="text" name="fullname" placeholder="Full Name" className="input input-bordered w-full" required />
-            <input type="email" name="email" placeholder="Email" className="input input-bordered w-full" required />
-            <input type="password" name="password" placeholder="Password" className="input input-bordered w-full" required />
-          </div>
-          <button type="submit" className="btn btn-primary mt-4">Create Admin</button>
-        </form>
-      </div>
+      <h1 className="text-3xl font-bold text-center mb-6">Admin Dashboard</h1>
 
       {/* Tabs */}
       <div className="flex justify-center space-x-4 mb-6">
         <button
-          className={`px-4 py-2 rounded-md ${activeTab === "books" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          className={`px-4 py-2 rounded-md ${
+            activeTab === "books" ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
           onClick={() => setActiveTab("books")}
         >
           Manage Books
         </button>
         <button
-          className={`px-4 py-2 rounded-md ${activeTab === "users" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          className={`px-4 py-2 rounded-md ${
+            activeTab === "users" ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
           onClick={() => setActiveTab("users")}
         >
           Manage Users
@@ -223,7 +172,7 @@ const Dashboard = () => {
       {/* Books Section */}
       {activeTab === "books" && (
         <div>
-          <h2 className="text-2xl font-bold mb-4">{isEditing ? "Edit Book" : "Add New Book"}</h2>
+          {/* Book Form */}
           <form onSubmit={handleSubmit} className="bg-base-100 p-6 rounded-lg shadow-lg mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Book Name" className="input input-bordered w-full" required />
@@ -236,75 +185,70 @@ const Dashboard = () => {
             <button type="submit" className="btn btn-primary mt-4">{isEditing ? "Update Book" : "Add Book"}</button>
           </form>
 
-          <h2 className="text-2xl font-bold mb-4">Books List</h2>
-          {loading ? (
-            <p>Loading books...</p>
-          ) : error ? (
-            <p className="text-red-500">{error}</p>
-          ) : (
-            <table className="table w-full">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Title</th>
-                  <th>Price</th>
-                  <th>Category</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {books.map((book) => (
-                  <tr key={book._id}>
-                    <td>{book.name}</td>
-                    <td>{book.title}</td>
-                    <td>{book.price}</td>
-                    <td>{book.category}</td>
-                    <td>
-                      <button onClick={() => handleEdit(book)} className="btn btn-sm btn-warning mr-2">Edit</button>
-                      <button onClick={() => handleDelete(book._id)} className="btn btn-sm btn-error">Delete</button>
-                    </td>
+          {/* Books Table */}
+          {loading ? <p>Loading books...</p> : error ? <p className="text-red-500">{error}</p> :
+            books.length > 0 ? (
+              <table className="table w-full">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Category</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {books.map((b) => (
+                    <tr key={b._id}>
+                      <td>{b.name}</td>
+                      <td>{b.title}</td>
+                      <td>{b.price}</td>
+                      <td>{b.category}</td>
+                      <td>
+                        <button onClick={() => handleEdit(b)} className="btn btn-sm btn-warning mr-2">Edit</button>
+                        <button onClick={() => handleDelete(b._id)} className="btn btn-sm btn-error">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : <p>No books found</p>
+          }
         </div>
       )}
 
       {/* Users Section */}
       {activeTab === "users" && (
         <div>
-          <h2 className="text-2xl font-bold mb-4">Users List</h2>
-          {loading ? (
-            <p>Loading users...</p>
-          ) : error ? (
-            <p className="text-red-500">{error}</p>
-          ) : (
-            <table className="table w-full">
-              <thead>
-                <tr>
-                  <th>Full Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user._id}>
-                    <td>{user.fullname}</td>
-                    <td>{user.email}</td>
-                    <td>{user.isAdmin ? "Admin" : "User"}</td>
-                    <td>
-                      <button onClick={() => toggleUserAdmin(user._id, user.isAdmin)} className="btn btn-sm btn-info">
-                        {user.isAdmin ? "Remove Admin" : "Make Admin"}
-                      </button>
-                    </td>
+          {loading ? <p>Loading users...</p> : error ? <p className="text-red-500">{error}</p> :
+            users.length > 0 ? (
+              <table className="table w-full">
+                <thead>
+                  <tr>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr key={u._id}>
+                      <td>{u.fullname}</td>
+                      <td>{u.email}</td>
+                      <td>{u.isAdmin ? "Admin" : "User"}</td>
+                      <td>
+                        <button onClick={() => toggleUserAdmin(u._id, u.isAdmin)} className="btn btn-sm btn-info">
+                          {u.isAdmin ? "Remove Admin" : "Make Admin"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : <p>No users found</p>
+          }
         </div>
       )}
     </div>
