@@ -22,7 +22,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ✅ PORT & Mongo URI
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5050;
 const mongo_uri = process.env.MONGO_URI;
 
 // ✅ MongoDB Connection
@@ -32,23 +32,17 @@ mongoose
   .catch((error) => console.log("❌ MongoDB Error:", error.message));
 
 // ✅ API Routes
-app.use("/book", bookRoute);
-app.use("/user", userRoute);
-app.use("/admin", adminRoute);
+app.use("/api/books", bookRoute);
+app.use("/api/users", userRoute);
+app.use("/api/admin", adminRoute);
 
-// ✅ Serve React Build on Render
-if (process.env.NODE_ENV === "production") {
-  const clientBuildPath = path.join(__dirname, "../client/dist");
-  app.use(express.static(clientBuildPath));
+// ✅ Serve React Build (Production Mode on Render)
+const clientBuildPath = path.join(__dirname, "../client/dist");
+app.use(express.static(clientBuildPath));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(clientBuildPath, "index.html"));
-  });
-} else {
-  app.get("/", (req, res) => {
-    res.send("🚀 API is running (Development Mode)");
-  });
-}
+app.get("*", (req, res) => {
+  res.sendFile(path.join(clientBuildPath, "index.html"));
+});
 
 // ✅ Start Server
 app.listen(port, () => {
