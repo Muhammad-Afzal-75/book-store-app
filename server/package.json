@@ -1,13 +1,13 @@
 {
-  "name": "book-store-app",
+  "name": "book-store-backend",
   "version": "1.0.0",
-  "main": "server/index.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "nodemon server/index.js",
-    "build": "cd client && npm install && npm run build",
-    "postinstall": "cd client && npm install && npm run build"
+    "start": "NODE_ENV=production node index.js",
+    "dev": "nodemon index.js",
+    "build": "cd ../client && npm install && npm run build",
+    "postinstall": "cd ../client && npm install && npm run build"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
